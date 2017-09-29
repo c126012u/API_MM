@@ -9,28 +9,28 @@ import #rulematch
 
 while True:
 
-	'''認識結果のデータを読み込む'''
-	#IDは画像から物体認識や動作認識が終わったあと
-	#指差し情報（座標情報込み？）windowsからubuntuに送られてくる
+    '''認識結果のデータを読み込む'''
+    #IDは画像から物体認識や動作認識が終わったあと
+    #指差し情報（座標情報込み？）windowsからubuntuに送られてくる
 
-	#sentence.json（ubuntuに保存されているので読み込む）
-	with open('sentence.json', 'r') as f:
-        sent = json.load(f)#辞書型
+    #sentence.json（ubuntuに保存されているので読み込む）
+    with open('sentence.json', 'r') as f:
+        speech = json.load(f)#辞書型
 
-	with open('ID.json','r') as fi:
-	    ID = json.laod(fi)
+    with open('ID.json','r') as fi:
+        input_scene = json.laod(fi)
 
-	while True:
+    while True:
 	    '''
-    	    ルールベース対話にマッチするかどうか
-            IDとsent を入力
-            出力はJSON形式「res.json」(ルールマッチ関数内で保存しておく)
-            {
+    	ルールベース対話にマッチするかどうか
+        IDとsent を入力
+        出力はJSON形式「res.json」(ルールマッチ関数内で保存しておく)
+        {
    		"response":{
      		"txt" : "",
      		"motion" : "",
      		"ID" : ""
-   		}
+   		    }
 	    }
 	    この関数の出力は辞書型オブジェクト
 	    '''
@@ -38,7 +38,7 @@ while True:
 
 	    #resのそれぞれの値が無い時、APIに入力音声テキストを入れる
 	    if res["response"]["txt"]==res["response"]["motion"]==res["response"]["name"]=="":
-    		res["response"]["txt"] = talk.chat(sent["sentence1"]["sentence"])
+    		res["response"]["txt"] = talk.chat(speech["sentence1"]["sentence"])
 
     		#res.jsonにAPIの出力（テキスト）を書き込む
     		with open('res.json','w') as fw:
