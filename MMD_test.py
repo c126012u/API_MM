@@ -34,7 +34,8 @@ while True:
    			"response":{
      		"txt" : "",
      		"motion" : "",
-     		"ID" : ""
+     		"ID" : "",
+			"in_txt" : "" #in_txtはルールマッチしないときのみ？
    			}
 		}
 
@@ -52,6 +53,7 @@ while True:
 
 
     		#res.jsonにAPIの出力（テキスト）を書き込む
+			#res.jsonの保存はこっちでする（ルールマッチのほうではやらない）
     		with open('res.json','w') as fw:
         		json.dump(res, fw, indent=4,ensure_ascii=False)
 
