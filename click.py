@@ -11,7 +11,8 @@ l=Tk.Label(root,
          text="Hello!!",
 )
 def print_click(event):
-    print("Clicked\n")
+    #print("Clicked\n")
+	return 1
 l.bind("<Button-1>", print_click)
 l.pack()
 
