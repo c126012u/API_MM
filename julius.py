@@ -104,18 +104,21 @@ def main():
         '''JSONファイルに書き込み'''
         obj = js.store(sentence_data, score_data, CM_list, word_list)
 
+        """speech.jsonを送る"""
+        host = "127.0.0.1"
+        port = 5000
 
-        """通信"""
-        url = "http://127.0.0.1:5000/chat"
-        method = "POST"
-        headers = {"Content-Type" : "application/json"}
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #オブジェクトの作成をします
+
+        client.connect((host, port)) #これでサーバーに接続します
+        obj_sock = json.dumps(obj)
+
+        client.send(obj_sock.encode('utf-8'))
+
+        client.close()
 
 
-        json_data = json.dumps(obj).encode("utf-8")
-        # httpリクエストを準備してPOST
-        request = urllib.request.Request(url, data=json_data, method=method, headers=headers)
-        with urllib.request.urlopen(request) as response:
-            response_body = response.read().decode("utf-8")
+
 
 
 if __name__ == '__main__':
