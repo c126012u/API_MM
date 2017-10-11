@@ -4,14 +4,13 @@
 import json
 import jtalk #OpenJTalk
 import talk #talkAPI
-from rule_base import res7
-import app_test as app
+from rule_base import res7 #ルールマッチ
 import socket
 import time
 import sys
 
-host = "127.0.0.1" #お使いのサーバーのホスト名を入れます
-port = 5000 #クライアントと同じPORTをしてあげます
+host = "127.0.0.1" 
+port = 5000 
 
 serversock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 serversock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -19,24 +18,23 @@ serversock.bind((host,port)) #IPとPORTを指定してバインドします
 
 while True:
 
-	print("認識開始：S")
+	print("認識開始:Enter")
 	inst = sys.stdin.readline()
 	speech = {'sentence1': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence2': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence3': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence4': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence5': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence6': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence7': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence8': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence9': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence10': {'sentence': '', 'score': '0', 'word': [], 'CM': []}}
 
 	scene = {'':{'location':[],'motion':'','name':[],'confidence':[]} }
 
 	#while True: #認識開始のループ
-	while inst == "S\n":
+	while inst == "\n":
 
-		serversock.listen(10)
+		serversock.listen(10) #ソケット接続準備
 		clientsock, client_address = serversock.accept() #接続されればデータを格納
-		print('Waiting for connections...')
 
 		while True:
-			rcvmsg = clientsock.recv(4096) #ここの時点でbytes
+			rcvmsg = clientsock.recv(4096) #ここの時点でrcvmsgはbytes
 
 			rcvmsg = rcvmsg.decode('utf-8')
-        	#rcvmsg = rcvmsg.encode('utf-8')
+        	
 			rcvmsg = json.loads(rcvmsg)
 			print('Received -> ')
 			print(rcvmsg)
