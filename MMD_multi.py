@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 参考：http://blog.livedoor.jp/sce_info3-craft/archives/9297948.html
+  　：http://blog.amedama.jp/entry/2017/03/29/080000
 
 
 #speech.jsonを受け取る用のサーバ
