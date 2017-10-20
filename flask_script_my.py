@@ -1,6 +1,7 @@
 from flask import Flask,request,jsonify
 import base64
 import re
+import location_calc as x_y
 
 #リクエストを受けたらscene.json（尤度と名前以外）を送るように書き換え
 #参考： http://uokada.hatenablog.jp/entry/2012/11/10/002453
@@ -51,6 +52,7 @@ def post_request():
     xmax=[]
     ymin=[]
     ymax=[]
+    skeleton = {}
     #keys_arrayにあるkeyリストをひとつひとつ見ていく
     f.write("ID\tPointing\tDepth\tXmax\tYmax\tXmin\tYmin\n-------------------------------------------------------------\n")
     for key_index in range(len(keys_array)):
@@ -61,13 +63,13 @@ def post_request():
 
         #画像だった場合
         if re.search("Objects",keys_array[key_index]):
-            object_name = []
-            confidence = []
+            object_list = []
+            confidence_list = []
             '''
-            object_name[0]:ID1の物体名N-best
-            object_name[1]:ID2の物体名N-best
+            object_list[0]:ID1の物体名N-best
+            object_list[1]:ID2の物体名N-best
             ...
-            confidence[0]~も同様
+            confidence_list[0]~も同様
             '''
             #画像の保存名
             save_name = keys_array[key_index] + ".jpg"
@@ -91,7 +93,7 @@ def post_request():
             point=int(keys_array[key_index][0])
         elif re.search("Sk",keys_array[key_index]):
             ske.write(str(keys_array[key_index])+" "+str(values_array[key_index])+"\n")
-
+            skeleton[str(keys_array[key_index]] = values_array[key_index]
         elif re.search("Xmax",keys_array[key_index]):
             xmax.append([int(keys_array[key_index][0]),int(values_array[key_index])])
         elif re.search("Xmin",keys_array[key_index]):
@@ -105,27 +107,9 @@ def post_request():
             print("",end="")
     #ここに関しては即興
     #file_str=""
-    '''
-    IDlist=[]
-    depthlist=[]
-    xmin=[]
-    xmax=[]
-    ymin=[]
-    ymax=[]
-    '''
 
     '''データ等格納'''
-    scene = cl.OrderedDict()#順番にデータ格納するため
-    for i in range(len(IDlist)):
-        data = cl.OrderedDict()#順番にデータ格納するため
-        data["location"] = [i]
-        data["motion"] = [i]
-        data["object"] = [i]
-        data["confidence"] = [i]
-
-
-        ys[sentence_list[i]] = data #辞書型のデータ
-    ###
+    x_y_list = []
     scene = cl.OrderedDict()#順番にデータ格納するため
     for i in IDlist:
         data = cl.OrderedDict()#順番にデータ格納するため
@@ -133,29 +117,37 @@ def post_request():
             data["motion"] = "POINTING"
         else:
             data["motion"] = ""
-        for j in depthlist:
-            if j[0] == i:
-                j[1]
         for j in xmax:
             if j[0] == i:
-                f.write(str(j[1])+"\t")
+                x_y_list.append(j[1])
         for j in ymax:
             if j[0] == i:
-                f.write(str(j[1])+"\t")
+                x_y_list.append(j[1])
         for j in xmin:
             if j[0] == i:
-                f.write(str(j[1])+"\t")
+                x_y_list.append(j[1])
         for j in ymin:
             if j[0] == i:
-                f.write(str(j[1]))
+                x_y_list.append(j[1])
+        x = (x_y_list[0] - x_y_list[2])/2.0 + x_y_list[2]
+        y = (x_y_list[1] - x_y_list[3])/2.0 + x_y_list[3]
+
+        for j in depthlist:
+            if j[0] == i:
+                data["location"] = [x, y, j[1]]
+        data["object"] = object_list[i]
+        data["confidence"] = confidence_list[i]
+        scene[IDlist[i]] = data #辞書型のデータ
+
     ###
 
-    data.update(skeleton)
-    fs = open('sentence.json','w')
-    fl = open('sentence_log.json', 'a+')
+    scene.update(skeleton)
+    fs = open('scene.json','w')
+    fl = open('scene_log.json', 'a+')
 
-    json.dump(ys,fs,indent=4,ensure_ascii=False)
-    json.dump(ys,fl,indent=4,ensure_ascii=False)
+    json.dump(scene,fs,indent=4,ensure_ascii=False)
+    json.dump(scene,fl,indent=4,ensure_ascii=False)
+    ##sceneはjson.dumps(scene)して送信する
 
     return jsonify(res='success', **data)
 
