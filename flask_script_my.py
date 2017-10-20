@@ -3,9 +3,6 @@ import base64
 import re
 import location_calc as x_y
 
-#リクエストを受けたらscene.json（尤度と名前以外）を送るように書き換え
-#参考： http://uokada.hatenablog.jp/entry/2012/11/10/002453
-
 #server
 app = Flask(__name__)
 
