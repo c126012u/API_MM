@@ -179,4 +179,5 @@ def post_request_chat():
 if __name__ == "__main__":
     app.debug = True
     #app.run(host = "163.225.223.101")
-    app.run(host = "0.0.0.0")
+    ##if またはクリックイベント
+	app.run(host = "0.0.0.0")
