@@ -1,7 +1,17 @@
 from flask import Flask,request,jsonify
 import base64
 import re
-import location_calc as x_y
+import sys
+from rule_base import res7
+import time
+import threading
+import json
+import jtalk #OpenJTalk
+import talk #talkAPI
+
+
+#リクエストを受けたらscene.json（尤度と名前以外）を送るように書き換え
+#参考： http://uokada.hatenablog.jp/entry/2012/11/10/002453
 
 #server
 app = Flask(__name__)
@@ -13,6 +23,64 @@ def convert_b64_to_file(b64,outfile_path):
     s = base64.decodestring(b64)
     with open(outfile_path,"wb") as f :
         f.write(s)
+
+def rule_or_api():
+    global speech
+    global scene
+    global trig
+
+    try:
+        res = res7.main(speech, scene)
+        print(speech)
+        print(scene)
+
+    except UnboundLocalError:
+        time.sleep(0.1)
+        pass
+    except TypeError:
+        time.sleep(0.1)
+        pass
+
+    if res == {}: #音声なし、ルールマッチなし
+        print("0.1秒待つ")
+        time.sleep(0.1)
+        #pass
+    #音声なし、ルールマッチあり
+    elif res["ID"]!="" and res["RESPONSE"]=="" and res["ORDER"]!="":
+        print("ロボット")
+        print(res)
+        with open('res.json','w') as fw:
+            json.dump(res, fw, indent=4,ensure_ascii=False)
+
+        trig = "" ##認識開始前にもどる
+        speech = {'sentence1': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence2': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence3': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence4': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence5': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence6': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence7': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence8': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence9': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence10': {'sentence': '', 'score': '0', 'word': [], 'CM': []}}
+        scene = {'':{'location':[],'motion':'','name':[],'confidence':[]} }
+        res = {}
+        #break
+    elif res["RESPONSE"]==res["ID"]==res["ORDER"]=="":#音声有り、ルールマッチなし
+        res["RESPONSE"] = talk.chat(res["input_txt"])
+        print(res)
+        with open('res.json','w') as fw:
+            json.dump(res, fw, indent=4,ensure_ascii=False)
+
+        jtalk.say(res["RESPONSE"])
+        trig = "" ##認識開始前にもどる
+        speech = {'sentence1': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence2': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence3': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence4': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence5': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence6': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence7': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence8': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence9': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence10': {'sentence': '', 'score': '0', 'word': [], 'CM': []}}
+        scene = {'':{'location':[],'motion':'','name':[],'confidence':[]} }
+        res = {}
+        #break
+    #音声有り、ルールマッチあり
+    else:
+        #書き込み
+        print(res)
+        with open('res.json','w') as fw:
+            json.dump(res, fw, indent=4,ensure_ascii=False)
+        jtalk.say(res["RESPONSE"])
+        trig = "" ##認識開始前にもどる
+        speech = {'sentence1': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence2': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence3': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence4': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence5': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence6': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence7': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence8': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence9': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence10': {'sentence': '', 'score': '0', 'word': [], 'CM': []}}
+        scene = {'':{'location':[],'motion':'','name':[],'confidence':[]} }
+        res = {}
+        #break
 
 @app.route("/")
 def index():
@@ -35,12 +103,8 @@ def post_request():
     """
     送ってくるjsonは一つ目の要素が{画像名:base64エンコード}としたもの
     """
-    # print(keys_array)
-    # print(type(keys_array))
-    # print(type(keys_array[0]))
-    #fは、IDが保存されたファイル
-    f=open("ID_list.txt","w")
-    ske=open("sk.txt","w")
+    #f=open("ID_list.txt","w")
+    #ske=open("sk.txt","w")
     #IDソート用のlist
     IDlist=[]
     #depth用のlist
@@ -51,7 +115,7 @@ def post_request():
     ymax=[]
     skeleton = {}
     #keys_arrayにあるkeyリストをひとつひとつ見ていく
-    f.write("ID\tPointing\tDepth\tXmax\tYmax\tXmin\tYmin\n-------------------------------------------------------------\n")
+    #f.write("ID\tPointing\tDepth\tXmax\tYmax\tXmin\tYmin\n-------------------------------------------------------------\n")
     for key_index in range(len(keys_array)):
 
         """
@@ -89,8 +153,8 @@ def post_request():
         elif re.search("Pointing",keys_array[key_index]):
             point=int(keys_array[key_index][0])
         elif re.search("Sk",keys_array[key_index]):
-            ske.write(str(keys_array[key_index])+" "+str(values_array[key_index])+"\n")
-            skeleton[str(keys_array[key_index]] = values_array[key_index]
+            #ske.write(str(keys_array[key_index])+" "+str(values_array[key_index])+"\n")
+            skeleton[str(keys_array[key_index])] = values_array[key_index]
         elif re.search("Xmax",keys_array[key_index]):
             xmax.append([int(keys_array[key_index][0]),int(values_array[key_index])])
         elif re.search("Xmin",keys_array[key_index]):
@@ -104,6 +168,7 @@ def post_request():
             print("",end="")
     #ここに関しては即興
     #file_str=""
+
 
     '''データ等格納'''
     x_y_list = []
@@ -137,47 +202,76 @@ def post_request():
         scene[IDlist[i]] = data #辞書型のデータ
 
     ###
-
+    #global scene
     scene.update(skeleton)
+
     fs = open('scene.json','w')
-    fl = open('scene_log.json', 'a+')
+    #fl = open('scene_log.json', 'a+')
 
     json.dump(scene,fs,indent=4,ensure_ascii=False)
-    json.dump(scene,fl,indent=4,ensure_ascii=False)
+    #json.dump(scene,fl,indent=4,ensure_ascii=False)
     ##sceneはjson.dumps(scene)して送信する
+    '''
+    sceneをルールマッチへ
+    '''
 
     return jsonify(res='success', **data)
 
 ##発話の認識結果のjsonを保存する
 @app.route('/chat', methods=['POST'])
 def post_request_chat():
+    #rs = (grequests.get(u) for u in urls)
+    #g = grequests.imap(rs)
+    #for r in g:
+    #    assert r.status_code == 200
+
     # Bad request
     if not request.headers['Content-Type'] == 'application/json':
         return jsonify(res='failure'), 400
     ###jsonはdict型なので即変換できないからlistに入れて処理している
 
     #jsonを取得
-    data = request.json
-    #keysを取得
-    keys_array = list(data.keys())
-    #valuesを取得
-    values_array = list(data.values())
-    """
-    送ってくるjsonはN_bestで作ったやつ
-    """
-    #とりあえず会話文とスコアをprintしてみる
-    #values_array
-    for i in range(len(keys_array)):
-        print(values_array[i]["sentence"],values_array[i]["score"])
+    global speech
+    speech = request.json
+    print(speech)
+    rule_or_api()
+    #global trig
+    #trig = ""
+    return jsonify(res='success', **speech)
 
-    #会話文と尤度
+@app.route('/scene_test', methods=['POST'])
+def post_request_scene_test():
+    #rs = (grequests.get(u) for u in urls)
+    #g = grequests.imap(rs)
+    #for r in g:
+    #    assert r.status_code == 200
 
+    # Bad request
+    if not request.headers['Content-Type'] == 'application/json':
+        return jsonify(res='failure'), 400
+    ###jsonはdict型なので即変換できないからlistに入れて処理している
 
-    return jsonify(res='success', **data)
-
+    #jsonを取得
+    global scene
+    scene = request.json
+    print(scene)
+    rule_or_api()
+    #global trig
+    #trig = ""
+    return jsonify(res='success', **scene)
 
 if __name__ == "__main__":
     app.debug = True
     #app.run(host = "163.225.223.101")
-    ##if またはクリックイベント
-	app.run(host = "0.0.0.0")
+    print("認識開始:Enter")
+    trig = sys.stdin.readline()
+    speech = {'sentence1': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence2': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence3': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence4': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence5': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence6': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence7': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence8': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence9': {'sentence': '', 'score': '0', 'word': [], 'CM': []}, 'sentence10': {'sentence': '', 'score': '0', 'word': [], 'CM': []}}
+    scene = {'':{'location':[],'motion':'','name':[],'confidence':[]} }
+    res = {}
+
+    while trig == "\n":
+        #thread = threading.Thread(target=rule_or_api)
+        #thread.start()
+
+
+        app.run(host = "0.0.0.0")#,threaded=True)
