@@ -11,7 +11,7 @@ def jtalk(t):
        open_jtalk=['open_jtalk']
        #mech=['-x','open_jtalk-1.08/mecab-naist-jdic']
        mech=['-x','/var/lib/mecab/dic/open-jtalk/naist-jdic']
-       htsvoice=['-m','MMDAgent_Example-1.4/Voice/mei/mei_normal.htsvoice']
+       htsvoice=['-m','open_jtalk/MMDAgent_Example-1.7/Voice/mei/mei_normal.htsvoice']
        speed=['-r','1.0']
        outwav=['-ow','open_jtalk.wav']
        cmd=open_jtalk+mech+htsvoice+speed+outwav
