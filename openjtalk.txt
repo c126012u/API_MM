@@ -1,0 +1,73 @@
+https://kledgeb.blogspot.jp/2014/05/ubuntu-open-jtalk-1-open-jtalkopen-jtalk.html
+
+
+
+
+
+8/22
+・http://tomosoft.jp/design/?p=8795
+
+8/23
+http://windvoice.hatenablog.jp/entry/2015/02/20/160051
+
+
+＊OpenJtalkを使うために
+
+１．Ubuntuソフトウェアセンターでインストールする
+
+　open-jtalk で検索「Japanese text-to-speech system」の詳細情報をクリック
+
+　下記の、追加のアドオン２つともチェックしてインストール
+ 　　Japanese male voice data for Open JTalk(hts-voice-nitech-jp-atr503-m001)
+ 　　NAIST Japanese Dictionary for Open JTalk(open-jtalk-mecab-naist-jdic)
+　　　→mecabの辞書は、/var/lib/mecab/dic/open-jtalk/naist-jdic/ にインストールされます。
+　　　　jtalk.pyで使用
+
+
+
+２．音声ファイルをダウンロードする
+https://sourceforge.net/projects/mmdagent/
+ここのページにアクセスし、最新のものをダウンロードする
+
+　Released /MMDAgent_Example/MMDAgent_Example-1.7/MMDAgent_Example-1.7.zip
+
+このようなzipファイルをダウンロードし、解凍する。
+MMDAgent_Exanple-1.7というフォルダ内のVoice/mei/mei_normal.htsvoiceが音声ファイル。
+
+↓↓python3で動くプログラム
+------
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+
+import subprocess
+import sys
+import wave
+
+ 
+def jtalk(t):
+       open_jtalk=['open_jtalk']
+       #mech=['-x','open_jtalk_dic_utf_8-1.08']
+       mech=['-x','/var/lib/mecab/dic/open-jtalk/naist-jdic']
+       '''このプログラムの上２行がある、かつtextエンコードなしで動く'''
+       htsvoice=['-m','MMDAgent_Example-1.7/Voice/mei/mei_normal.htsvoice']
+       speed=['-r','1.0']
+       outwav=['-ow','open_jtalk.wav']
+       cmd=open_jtalk+mech+htsvoice+speed+outwav
+ 
+       c = subprocess.Popen(cmd,stdin=subprocess.PIPE)
+       c.communicate(t)
+       c.stdin.close()
+       c.wait()
+       aplay = ['aplay','-q','open_jtalk.wav']
+       wr = subprocess.Popen(aplay)
+ 
+def say(text):
+ 
+       jtalk(text)
+
+if __name__ == '__main__':
+       text = sys.argv[1]
+       say(text) #音声ファイル生成
+
+------
